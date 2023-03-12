@@ -6,4 +6,4 @@ credentials.json
 ./env
 ./env/**/*
 pushbullet_creds.json
-
+gmail-notifier-webjob.zip

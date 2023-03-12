@@ -2,6 +2,10 @@ from __future__ import print_function
 
 import os.path
 from datetime import datetime
+import requests
+import automationassets
+import time
+import json
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -12,8 +16,7 @@ from pushbullet import PushBullet
 from pywebio.input import *
 from pywebio.output import *
 from pywebio.session import *
-import time
-import json
+
 
 class Main:
     service = None
@@ -128,8 +131,22 @@ class Main:
         # created automatically when the authorization flow completes for the first
         # time.
         if os.path.exists('token.json'):
-            creds = Credentials.from_authorized_user_file('token.json', self.SCOPES)
+            #creds = Credentials.from_authorized_user_file('token.json', self.SCOPES)
+            tokens = dict({
+                "token": automationassets.get_automation_variable("token"),
+                "refresh_token": automationassets.get_automation_variable("refresh_token"),
+                "token_uri": automationassets.get_automation_variable("token_uri"),
+                "client_id": automationassets.get_automation_variable("client_id"),
+                "client_secret": automationassets.get_automation_variable("client_secret"),
+                "expiry": automationassets.get_automation_variable("expiry")
+            })
+            creds = Credentials.from_authorized_info(tokens, scopes = [
+                automationassets.get_automation_variable("scope1"),
+                automationassets.get_automation_variable("scope2"),
+                automationassets.get_automation_variable("scope3")
+            ])
         # If there are no (valid) credentials available, let the user log in.
+        '''
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
@@ -140,23 +157,11 @@ class Main:
             # Save the credentials for the next run
             with open('token.json', 'w') as token:
                 token.write(creds.to_json())
+        '''
 
         try:
             # Call the Gmail API
             self.service = build('gmail', 'v1', credentials=creds)
-            '''
-            results = self.service.users().labels().list(userId='me').execute()
-            labels = results.get('labels', [])
-            
-            if not labels:
-                print('No labels found.')
-                return
-            print('Labels:')
-            for label in labels:
-                print(label['name'], label)
-            print()
-            '''
-
             nextPageToken = None
             all_msgs = []
             for labelId in self.check_labels:
